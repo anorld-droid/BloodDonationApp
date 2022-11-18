@@ -6,6 +6,7 @@
     <string name="compatible">Compatible</string>
     <string name="home">Home</string>
     <string name="donors_email">Donors Email</string>
+    <string name="donate">Donate</string>
 
 
     <string-array name="bloodgroups">
