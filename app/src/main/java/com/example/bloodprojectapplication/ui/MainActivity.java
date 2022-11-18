@@ -21,7 +21,10 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.example.bloodprojectapplication.R;
+import com.example.bloodprojectapplication.domain.SharePreference;
+import com.example.bloodprojectapplication.model.Notification;
 import com.example.bloodprojectapplication.ui.authentication.LoginActivity;
+import com.example.bloodprojectapplication.ui.notification.NotificationActivity;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -51,28 +54,16 @@ public class MainActivity extends AppCompatActivity
         GoogleApiClient.OnConnectionFailedListener,
         GoogleMap.OnMarkerClickListener,
         LocationListener {
+    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+    double latitude;
+    double longitude;
+    Location mLastLocation;
+    Marker mCurrLocationMarker;
+    LocationRequest mLocationRequest;
     private DrawerLayout drawerLayout;
     private TextView nav_fullnames, nav_email, nav_bloodgroups, nav_type;
-
     private GoogleMap mMap;
-
     private GoogleApiClient mGoogleApiClient;
-
-    double latitude;
-
-    double longitude;
-
-    Location mLastLocation;
-
-    Marker mCurrLocationMarker;
-
-    LocationRequest mLocationRequest;
-
-
-
-
-    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,18 +111,31 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
-
                     String name = snapshot.child("name").getValue().toString();
                     nav_fullnames.setText(name);
+                    SharePreference.getINSTANCE(getApplicationContext()).setName(name);
+
 
                     String email = snapshot.child("email").getValue().toString();
                     nav_email.setText(email);
+                    SharePreference.getINSTANCE(getApplicationContext()).setEmail(email);
 
-                    String bloodgroups = snapshot.child("bloodgroup").getValue().toString();
-                    nav_bloodgroups.setText(bloodgroups);
+
+                    String bloodGroup = snapshot.child("bloodgroup").getValue().toString();
+                    nav_bloodgroups.setText(bloodGroup);
+                    SharePreference.getINSTANCE(getApplicationContext()).setBloodgroup(bloodGroup);
+
 
                     String type = snapshot.child("type").getValue().toString();
                     nav_type.setText(type);
+                    if (type.equals("recipient")) {
+                        nav_view.getMenu().clear(); //clear old inflated items.
+                        nav_view.inflateMenu(R.menu.recipient_menu);
+                    }
+
+                    String phoneNumber = snapshot.child("phonenumber").getValue().toString();
+                    SharePreference.getINSTANCE(getApplicationContext()).setPhonenumber(phoneNumber);
+
 
                 }
 
@@ -146,6 +150,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.profile) {
@@ -155,6 +160,24 @@ public class MainActivity extends AppCompatActivity
         if (item.getItemId() == R.id.logout) {
             FirebaseAuth.getInstance().signOut();
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+        }
+        if (item.getItemId() == R.id.donate) {
+            DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("Notifications")
+                    .child(SharePreference.getINSTANCE(this).getBLOODGROUP());
+            String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            Notification notification = new Notification(
+                    SharePreference.getINSTANCE(this).getName(),
+                    uid,
+                    SharePreference.getINSTANCE(this).getEmail(),
+                    SharePreference.getINSTANCE(this).getBLOODGROUP(),
+                    SharePreference.getINSTANCE(this).getPhonenumber()
+            );
+            reference.child(uid).setValue(notification);
+        }
+        if (item.getItemId() == R.id.notifications) {
+            Intent intent = new Intent(MainActivity.this, NotificationActivity.class);
             startActivity(intent);
         }
 
@@ -373,7 +396,7 @@ public class MainActivity extends AppCompatActivity
 
     public void onRequestPermissionsResult(int requestCode,
 
-                                           String permissions[], int[] grantResults) {
+                                           String[] permissions, int[] grantResults) {
 
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {

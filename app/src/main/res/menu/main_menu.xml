@@ -7,9 +7,9 @@
         android:title="@string/home"/>
 
         <item
-        android:id="@+id/sentEmail"
-        android:icon="@drawable/ic_check"
-        android:title="@string/donors_email"/>
+            android:id="@+id/donate"
+            android:icon="@drawable/ic_check"
+            android:title="@string/donate" />
 
     <item
         android:id="@+id/compatible"
@@ -72,10 +72,7 @@
                     android:id="@+id/profile"
                     android:icon="@drawable/ic_person"
                     android:title="profile"/>
-                <item
-                    android:id="@+id/notifications"
-                    android:icon="@drawable/ic__notifications"
-                    android:title="Notifications"/>
+
                 <item
                     android:id="@+id/logout"
                     android:icon="@drawable/ic_logout"
