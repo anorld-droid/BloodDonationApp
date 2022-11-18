@@ -1,8 +1,5 @@
 package com.example.bloodprojectapplication.ui.authentication;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,7 +9,11 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.bloodprojectapplication.R;
+import com.example.bloodprojectapplication.domain.SharePreference;
 import com.example.bloodprojectapplication.ui.MainActivity;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -20,12 +21,17 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class LoginActivity extends AppCompatActivity {
 
     private TextView backButton;
 
-    private TextInputEditText  loginEmailAddress,loginPassword;
+    private TextInputEditText loginEmailAddress, loginPassword;
     private TextView forgotPassword;
 
     private Button loginButton;
@@ -47,7 +53,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = mAuth.getCurrentUser();
-                if(user !=null){
+                if (user != null) {
                     Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                     startActivity(intent);
                     finish();
@@ -57,10 +63,10 @@ public class LoginActivity extends AppCompatActivity {
             }
         };
 
-       loginEmailAddress = findViewById(R.id.loginEmailAddress);
-       loginPassword = findViewById(R.id.loginPassword);
-       forgotPassword = findViewById(R.id.forgotPassword);
-       loginButton = findViewById(R.id.loginButton);
+        loginEmailAddress = findViewById(R.id.loginEmailAddress);
+        loginPassword = findViewById(R.id.loginPassword);
+        forgotPassword = findViewById(R.id.forgotPassword);
+        loginButton = findViewById(R.id.loginButton);
         backButton = findViewById(R.id.backButton);
 
         loader = new ProgressDialog(this);
@@ -80,15 +86,13 @@ public class LoginActivity extends AppCompatActivity {
                 final String email = loginEmailAddress.getText().toString().trim();
                 final String password = loginPassword.getText().toString().trim();
 
-                if(TextUtils.isEmpty(email)){
+                if (TextUtils.isEmpty(email)) {
                     loginEmailAddress.setError("Email is required");
                 }
 
-                if(TextUtils.isEmpty(password)){
+                if (TextUtils.isEmpty(password)) {
                     loginPassword.setError("Password is required");
-                }
-
-                else{
+                } else {
                     loader.setMessage("log in progress");
                     loader.setCanceledOnTouchOutside(false);
                     loader.show();
@@ -96,12 +100,13 @@ public class LoginActivity extends AppCompatActivity {
                     mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
-                            if (task.isSuccessful()){
+                            if (task.isSuccessful()) {
                                 Toast.makeText(LoginActivity.this, "Login is successful", Toast.LENGTH_SHORT).show();
+                                getUserDetails();
                                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                                 startActivity(intent);
                                 finish();
-                            }else {
+                            } else {
                                 Toast.makeText(LoginActivity.this, task.getException().toString(), Toast.LENGTH_SHORT).show();
                             }
 
@@ -123,5 +128,35 @@ public class LoginActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         mAuth.removeAuthStateListener(authStateListener);
+    }
+
+    private void getUserDetails(){
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(
+                FirebaseAuth.getInstance().getCurrentUser().getUid()
+        );
+        userRef.get().addOnCompleteListener(task -> {
+            DataSnapshot snapshot = task.getResult();
+            if (snapshot.exists()){
+                String name = snapshot.child("name").getValue().toString();
+                SharePreference.getINSTANCE(getApplicationContext()).setName(name);
+
+
+                String email = snapshot.child("email").getValue().toString();
+                SharePreference.getINSTANCE(getApplicationContext()).setEmail(email);
+
+
+                String bloodGroup = snapshot.child("bloodgroup").getValue().toString();
+                SharePreference.getINSTANCE(getApplicationContext()).setBloodgroup(bloodGroup);
+
+
+                String type = snapshot.child("type").getValue().toString();
+                SharePreference.getINSTANCE(getApplicationContext()).setType(type);
+
+                String phoneNumber = snapshot.child("phonenumber").getValue().toString();
+                SharePreference.getINSTANCE(getApplicationContext()).setPhonenumber(phoneNumber);
+
+            }
+
+        });
     }
 }
