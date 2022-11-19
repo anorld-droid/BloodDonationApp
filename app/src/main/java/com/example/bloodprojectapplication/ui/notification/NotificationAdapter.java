@@ -20,7 +20,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.bloodprojectapplication.R;
 import com.example.bloodprojectapplication.model.Notification;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -50,17 +49,10 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         String message = "Hello, I am " + notification.getUserName() + " and I would like to donate blood.\nMy blood group is "
                 + notification.getBloodGroup() + "\nYou can also connect with me through email " + notification.getUserEmail();
         holder.message.setText(message);
-        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat formatter = new SimpleDateFormat("EEE, dd MMM, HH:mm:ss");
         Date dn = new Date();
         String formatted = formatter.format(dn);
-        Date today = null;
-        try {
-            today = formatter.parse(formatted);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        holder.timeStamp.setText(String.valueOf(today));
-
+        holder.timeStamp.setText(formatted);
         holder.connect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
