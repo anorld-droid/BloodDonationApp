@@ -49,7 +49,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         String message = "Hello, I am " + notification.getUserName() + " and I would like to donate blood.\nMy blood group is "
                 + notification.getBloodGroup() + "\nYou can also connect with me through email " + notification.getUserEmail();
         holder.message.setText(message);
-        SimpleDateFormat formatter = new SimpleDateFormat("EEE, dd MMM, HH:mm:ss");
+        SimpleDateFormat formatter = new SimpleDateFormat("EEE, dd MMM");
         Date dn = new Date();
         String formatted = formatter.format(dn);
         holder.timeStamp.setText(formatted);
