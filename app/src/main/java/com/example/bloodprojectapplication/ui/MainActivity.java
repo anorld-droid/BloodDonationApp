@@ -24,6 +24,7 @@ import com.example.bloodprojectapplication.R;
 import com.example.bloodprojectapplication.domain.SharePreference;
 import com.example.bloodprojectapplication.model.Notification;
 import com.example.bloodprojectapplication.ui.authentication.LoginActivity;
+import com.example.bloodprojectapplication.ui.history.HistoryActivity2;
 import com.example.bloodprojectapplication.ui.notification.NotificationActivity;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -45,6 +46,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
 
 
 public class MainActivity extends AppCompatActivity
@@ -167,23 +172,37 @@ public class MainActivity extends AppCompatActivity
             DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("Notifications")
                     .child(SharePreference.getINSTANCE(this).getBLOODGROUP());
             String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            Random rand = new Random();
+            String id = String.format("%06d", rand.nextInt(999999));
+            SimpleDateFormat formatter = new SimpleDateFormat("EEE, dd MMM HH:mm");
+            Date dn = new Date();
+            String formatted = formatter.format(dn);
             Notification notification = new Notification(
+                    id,
                     SharePreference.getINSTANCE(this).getName(),
                     uid,
                     SharePreference.getINSTANCE(this).getEmail(),
                     SharePreference.getINSTANCE(this).getBLOODGROUP(),
-                    SharePreference.getINSTANCE(this).getPhonenumber()
-            );
+                    SharePreference.getINSTANCE(this).getPhonenumber(),
+                    "empty", formatted);
             reference.child(uid).setValue(notification);
+            FirebaseDatabase.getInstance().getReference().child("users")
+                    .child(uid).child("history").child(formatted).setValue(notification);
+            Toast.makeText(this, "Notification sent, a recipient will contact you.", Toast.LENGTH_LONG).show();
         }
         if (item.getItemId() == R.id.notifications) {
             Intent intent = new Intent(MainActivity.this, NotificationActivity.class);
+            startActivity(intent);
+        }
+        if (item.getItemId() == R.id.history) {
+            Intent intent = new Intent(MainActivity.this, HistoryActivity2.class);
             startActivity(intent);
         }
 
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
+
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
