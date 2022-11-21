@@ -12,9 +12,9 @@
             android:title="@string/donate" />
 
     <item
-        android:id="@+id/compatible"
+        android:id="@+id/history"
         android:icon="@drawable/compatible"
-        android:title="@string/compatible"/>
+        android:title="@string/history" />
 
     <item
         android:title="blood Groups">
