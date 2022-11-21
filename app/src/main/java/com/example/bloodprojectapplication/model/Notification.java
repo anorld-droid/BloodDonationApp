@@ -1,22 +1,28 @@
 package com.example.bloodprojectapplication.model;
 
 public class Notification {
+    private String id;
     private String userName;
     private String userUID;
     private String userEmail;
     private String bloodGroup;
     private String phoneNumber;
+    private String recipient;
+    private String timeStamp;
 
     public Notification() {
 
     }
 
-    public Notification(String userName, String userUID, String userEmail, String bloodGroup, String phoneNumber) {
+    public Notification(String id, String userName, String userUID, String userEmail, String bloodGroup, String phoneNumber, String recipient, String timeStamp) {
+        this.id = id;
         this.userName = userName;
         this.userUID = userUID;
         this.userEmail = userEmail;
         this.bloodGroup = bloodGroup;
         this.phoneNumber = phoneNumber;
+        this.recipient = recipient;
+        this.timeStamp = timeStamp;
     }
 
     public String getUserName() {
@@ -57,5 +63,29 @@ public class Notification {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public String getRecipient() {
+        return recipient;
+    }
+
+    public void setRecipient(String recipient) {
+        this.recipient = recipient;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getTimeStamp() {
+        return timeStamp;
+    }
+
+    public void setTimeStamp(String timeStamp) {
+        this.timeStamp = timeStamp;
     }
 }

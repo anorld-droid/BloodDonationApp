@@ -18,11 +18,12 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bloodprojectapplication.R;
+import com.example.bloodprojectapplication.domain.SharePreference;
 import com.example.bloodprojectapplication.model.Notification;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.Viewholder> {
@@ -49,24 +50,18 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         String message = "Hello, I am " + notification.getUserName() + " and I would like to donate blood.\nMy blood group is "
                 + notification.getBloodGroup() + "\nYou can also connect with me through email " + notification.getUserEmail();
         holder.message.setText(message);
-        SimpleDateFormat formatter = new SimpleDateFormat("EEE, dd MMM");
-        Date dn = new Date();
-        String formatted = formatter.format(dn);
-        holder.timeStamp.setText(formatted);
-        holder.connect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (ContextCompat.checkSelfPermission(
-                        context, android.Manifest.permission.CALL_PHONE) !=
-                        PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions((Activity) context, new
-                            String[]{android.Manifest.permission.CALL_PHONE}, 0);
-                } else {
-                    Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + notification.getPhoneNumber()));
-                    context.startActivity(intent);
-                }
-
+        holder.timeStamp.setText(notification.getTimeStamp());
+        holder.connect.setOnClickListener(v -> {
+            if (ContextCompat.checkSelfPermission(
+                    context, android.Manifest.permission.CALL_PHONE) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions((Activity) context, new
+                        String[]{android.Manifest.permission.CALL_PHONE}, 0);
+            } else {
+                Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + notification.getPhoneNumber()));
+                context.startActivity(intent);
             }
+            updateNotification(notification);
         });
 
     }
@@ -89,5 +84,13 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             timeStamp = itemView.findViewById(R.id.notication_timestamp);
             connect = itemView.findViewById(R.id.connect);
         }
+    }
+
+    private void updateNotification(Notification notification) {
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("Notifications")
+                .child(SharePreference.getINSTANCE(context).getBLOODGROUP());
+        reference.child(notification.getUserUID()).child("recipient").setValue(SharePreference.getINSTANCE(context).getName());
+        FirebaseDatabase.getInstance().getReference().child("users")
+                .child(notification.getUserUID()).child("history").child(notification.getTimeStamp()).child("recipient").setValue(SharePreference.getINSTANCE(context).getName());
     }
 }

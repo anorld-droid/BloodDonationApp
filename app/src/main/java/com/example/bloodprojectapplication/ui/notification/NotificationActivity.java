@@ -67,7 +67,6 @@ public class NotificationActivity extends AppCompatActivity {
                             assert notification != null;
                             mNotifications.add(notification);
                             notificationAdapter.notifyDataSetChanged();
-
                         }
 
                         @Override
