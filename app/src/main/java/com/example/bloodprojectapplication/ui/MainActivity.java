@@ -7,7 +7,10 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,10 +21,12 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
+import androidx.core.view.MenuItemCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.example.bloodprojectapplication.R;
 import com.example.bloodprojectapplication.domain.SharePreference;
+import com.example.bloodprojectapplication.model.Geocoding;
 import com.example.bloodprojectapplication.model.Notification;
 import com.example.bloodprojectapplication.ui.authentication.LoginActivity;
 import com.example.bloodprojectapplication.ui.history.HistoryActivity2;
@@ -36,6 +41,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -46,10 +52,18 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 
 public class MainActivity extends AppCompatActivity
@@ -155,6 +169,77 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.search_menu, menu);
+        MenuItem searchViewItem = menu.findItem(R.id.app_bar_search);
+        final SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchViewItem);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                getCoordinates(query);
+                return false;
+
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+
+                return false;
+            }
+        });
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    private void getCoordinates(String location) {
+        OkHttpClient client = new OkHttpClient();
+
+        Request request = new Request.Builder()
+                .url("https://google-maps-geocoding.p.rapidapi.com/geocode/json?address=" + location + "&language=en")
+                .get()
+                .addHeader("X-RapidAPI-Key", "e064577ed9msh168f2fe204257e9p124b32jsn69ec75e222d8")
+                .addHeader("X-RapidAPI-Host", "google-maps-geocoding.p.rapidapi.com")
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                Gson gson = new Gson();
+                Geocoding geocoding = gson.fromJson(response.body().string(), Geocoding.class);
+                if (geocoding.getResults().length > 0) {
+                    Double lng = geocoding.getResults()[0].getGeometry().getLocation().getLng();
+                    Double lat = geocoding.getResults()[0].getGeometry().getLocation().getLat();
+
+                    runOnUiThread(() -> {
+                        LatLng mDriverLocation = new LatLng(lat, lng);
+                        mMap.addMarker(new MarkerOptions()
+                                .position(mDriverLocation)
+                                .title(location));
+
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mDriverLocation, 13));
+                        CameraPosition cameraPosition = new CameraPosition.Builder()
+                                .target(mDriverLocation)      // Sets the center of the map to location user
+                                .zoom(17)                   // Sets the zoom
+                                .bearing(90)                // Sets the orientation of the camera to east
+                                .tilt(40)                   // Sets the tilt of the camera to 30 degrees
+                                .build();                   // Creates a CameraPosition from the builder
+                        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                    });
+
+                    Log.i("Coordinates", response.toString());
+                } else {
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Location not found", Toast.LENGTH_SHORT).show());
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.e("Coordinates", e.toString());
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Location not found", Toast.LENGTH_SHORT).show());
+            }
+
+        });
+    }
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -196,6 +281,10 @@ public class MainActivity extends AppCompatActivity
         }
         if (item.getItemId() == R.id.history) {
             Intent intent = new Intent(MainActivity.this, HistoryActivity2.class);
+            startActivity(intent);
+        }
+        if (item.getItemId() == R.id.about) {
+            Intent intent = new Intent(MainActivity.this, AboutActivity.class);
             startActivity(intent);
         }
 

@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
 
-    android:layout_margin="10dp">
+    android:layout_margin="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -24,7 +24,7 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="8"
+            android:layout_weight="10"
             android:orientation="vertical">
 
             <TextView
@@ -46,6 +46,19 @@
 
         </LinearLayout>
 
+        <Button
+            android:id="@+id/contact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="2dp"
+
+            android:background="@drawable/buttons_background"
+            android:backgroundTint="@null"
+            android:text="Call"
+            android:textAllCaps="true"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

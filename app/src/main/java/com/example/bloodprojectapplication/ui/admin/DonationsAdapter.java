@@ -1,12 +1,19 @@
 package com.example.bloodprojectapplication.ui.admin;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bloodprojectapplication.R;
@@ -48,6 +55,17 @@ public class DonationsAdapter extends RecyclerView.Adapter<DonationsAdapter.View
 
         holder.message.setText(message);
         holder.timeStamp.setText(notification.getTimeStamp());
+        holder.contact.setOnClickListener(v -> {
+            if (ContextCompat.checkSelfPermission(
+                    context, android.Manifest.permission.CALL_PHONE) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions((Activity) context, new
+                        String[]{android.Manifest.permission.CALL_PHONE}, 0);
+            } else {
+                Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + notification.getPhoneNumber()));
+                context.startActivity(intent);
+            }
+        });
     }
 
 
@@ -60,11 +78,13 @@ public class DonationsAdapter extends RecyclerView.Adapter<DonationsAdapter.View
     public static class Viewholder extends RecyclerView.ViewHolder {
         private final TextView message;
         private final TextView timeStamp;
+        private final Button contact;
 
         public Viewholder(@NonNull View itemView) {
             super(itemView);
             message = itemView.findViewById(R.id.notification_message);
             timeStamp = itemView.findViewById(R.id.notification_timestamp);
+            contact = itemView.findViewById(R.id.contact);
         }
     }
 }

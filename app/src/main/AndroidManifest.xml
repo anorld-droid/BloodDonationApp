@@ -19,6 +19,13 @@
         android:theme="@style/Theme.BloodprojectApplication"
         tools:targetApi="31">
         <activity
+            android:name=".ui.AboutActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
             android:name=".ui.history.HistoryActivity2"
             android:exported="false" />
         <activity

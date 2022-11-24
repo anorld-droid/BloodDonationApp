@@ -20,7 +20,9 @@
         <item>AB-</item>
         <item>O+</item>
         <item>O-</item>
-
-
     </string-array>
+
+    <string name="donor_message">The need for blood is Constant, and because there is no substitute for Blood, Lifeline Blood\nApplication relies on generosity  of everyday heroes like you to make sure there\'s enough\navailable to those who need it.\nEveryday all around the globe Many lose their lives due to lack of or Delayed transfusion.\nLifeline Blood Application is an Android Operating system based Mobile application developed to Find Donors, In a Critical situation.
+    </string>
+    <string name="search">Search</string>
 </resources>
