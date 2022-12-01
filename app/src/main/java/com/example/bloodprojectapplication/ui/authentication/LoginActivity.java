@@ -1,8 +1,13 @@
 package com.example.bloodprojectapplication.ui.authentication;
 
+import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -15,9 +20,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.example.bloodprojectapplication.R;
 import com.example.bloodprojectapplication.domain.SharePreference;
+import com.example.bloodprojectapplication.model.User;
 import com.example.bloodprojectapplication.ui.MainActivity;
 import com.example.bloodprojectapplication.ui.admin.AdminMainActivity;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -33,17 +40,13 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private static final int REQUEST_LOCATION = 1;
     private TextView backButton;
-
     private TextInputEditText loginEmailAddress, loginPassword;
     private TextView forgotPassword;
-
     private Button loginButton;
-
     private ProgressDialog loader;
-
     private FirebaseAuth mAuth;
-
     private FirebaseAuth.AuthStateListener authStateListener;
 
     @Override
@@ -121,6 +124,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void getUserDetails() {
+
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(
                 FirebaseAuth.getInstance().getCurrentUser().getUid()
         );
@@ -144,6 +148,7 @@ public class LoginActivity extends AppCompatActivity {
 
                 String phoneNumber = snapshot.child("phonenumber").getValue().toString();
                 SharePreference.getINSTANCE(getApplicationContext()).setPhonenumber(phoneNumber);
+                updateLocation(name, phoneNumber, bloodGroup);
                 Intent intent;
                 if (type.equals("Admin")) {
                     intent = new Intent(LoginActivity.this, AdminMainActivity.class);
@@ -219,5 +224,31 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(LoginActivity.this, "Error Failed", Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void updateLocation(String name, String phoneNumber, String bloodGroup) {
+        if (ActivityCompat.checkSelfPermission(
+                LoginActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                LoginActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
+        } else {
+            LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+            Location locationGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (locationGPS != null) {
+                Double lat = locationGPS.getLatitude();
+                Double lng = locationGPS.getLongitude();
+                User user = new User();
+                user.setUsername(name);
+                user.setContact(phoneNumber);
+                user.setBloodGroup(bloodGroup);
+                user.setLocation(lat + " " + lng);
+                FirebaseDatabase.getInstance().getReference().child("location").child(
+                        FirebaseAuth.getInstance().getCurrentUser().getUid()
+                ).setValue(user);
+            } else {
+                Toast.makeText(this, "Unable to find location.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }

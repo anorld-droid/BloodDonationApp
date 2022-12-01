@@ -28,6 +28,7 @@ import com.example.bloodprojectapplication.R;
 import com.example.bloodprojectapplication.domain.SharePreference;
 import com.example.bloodprojectapplication.model.Geocoding;
 import com.example.bloodprojectapplication.model.Notification;
+import com.example.bloodprojectapplication.model.User;
 import com.example.bloodprojectapplication.ui.authentication.LoginActivity;
 import com.example.bloodprojectapplication.ui.history.HistoryActivity2;
 import com.example.bloodprojectapplication.ui.notification.NotificationActivity;
@@ -40,7 +41,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -56,7 +56,9 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Random;
 
 import okhttp3.Call;
@@ -74,15 +76,22 @@ public class MainActivity extends AppCompatActivity
         GoogleMap.OnMarkerClickListener,
         LocationListener {
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+    private static final LatLng mUserLocation = new LatLng(-0.42502836574115077, 36.955733708091024);
+    LatLng sydney = new LatLng(0.00177069, 34.6111966);
     double latitude;
     double longitude;
     Location mLastLocation;
     Marker mCurrLocationMarker;
     LocationRequest mLocationRequest;
+    LatLng TamWorth = new LatLng(-31.083332, 150.916672);
+    LatLng NewCastle = new LatLng(-32.916668, 151.750000);
+    LatLng Brisbane = new LatLng(-27.470125, 153.021072);
+    private ArrayList<User> mUsers;
     private DrawerLayout drawerLayout;
     private TextView nav_fullnames, nav_email, nav_bloodgroups, nav_type;
     private GoogleMap mMap;
     private GoogleApiClient mGoogleApiClient;
+    private ArrayList<LatLng> locationArrayList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,6 +112,11 @@ public class MainActivity extends AppCompatActivity
         drawerLayout = findViewById(R.id.drawerLayout);
         NavigationView nav_view = findViewById(R.id.nav_view);
 
+        locationArrayList = new ArrayList<>();
+        mUsers = new ArrayList<>();
+        locationArrayList.add(sydney);
+
+
         // Get a handle to the fragment and register the callback.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -121,6 +135,7 @@ public class MainActivity extends AppCompatActivity
         nav_email = nav_view.getHeaderView(0).findViewById(R.id.nav_user_email);
         nav_bloodgroups = nav_view.getHeaderView(0).findViewById(R.id.nav_user_bloodgroups);
         nav_type = nav_view.getHeaderView(0).findViewById(R.id.nav_user_type);
+
 
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(
                 FirebaseAuth.getInstance().getCurrentUser().getUid()
@@ -169,6 +184,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -192,9 +208,9 @@ public class MainActivity extends AppCompatActivity
         return super.onCreateOptionsMenu(menu);
     }
 
+
     private void getCoordinates(String location) {
         OkHttpClient client = new OkHttpClient();
-
         Request request = new Request.Builder()
                 .url("https://google-maps-geocoding.p.rapidapi.com/geocode/json?address=" + location + "&language=en")
                 .get()
@@ -211,14 +227,14 @@ public class MainActivity extends AppCompatActivity
                     Double lat = geocoding.getResults()[0].getGeometry().getLocation().getLat();
 
                     runOnUiThread(() -> {
-                        LatLng mDriverLocation = new LatLng(lat, lng);
+                        LatLng mUserLocation = new LatLng(lat, lng);
                         mMap.addMarker(new MarkerOptions()
-                                .position(mDriverLocation)
+                                .position(mUserLocation)
                                 .title(location));
 
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mDriverLocation, 13));
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mUserLocation, 13));
                         CameraPosition cameraPosition = new CameraPosition.Builder()
-                                .target(mDriverLocation)      // Sets the center of the map to location user
+                                .target(mUserLocation)      // Sets the center of the map to location user
                                 .zoom(17)                   // Sets the zoom
                                 .bearing(90)                // Sets the orientation of the camera to east
                                 .tilt(40)                   // Sets the tilt of the camera to 30 degrees
@@ -295,32 +311,43 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
-
-        //Initialize Google Play Services
         mMap = googleMap;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("location");
+        reference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                    reference.child(Objects.requireNonNull(dataSnapshot.getKey())).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            User user = snapshot.getValue(User.class);
+                            assert user != null;
+                            String[] mLatLng = user.getLocation().split(" ");
+                            LatLng userLocation = new LatLng(Double.parseDouble(mLatLng[0]), Double.parseDouble(mLatLng[1]));
+                            mMap.addMarker(new MarkerOptions().position(userLocation).title(user.getUsername() + "(" + user.getContact() + ") " + user.getBloodGroup()));
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 13));
+                            CameraPosition cameraPosition = new CameraPosition.Builder()
+                                    .target(userLocation)      // Sets the center of the map to location user
+                                    .zoom(17)                   // Sets the zoom
+                                    .bearing(90)                // Sets the orientation of the camera to east
+                                    .tilt(40)                   // Sets the tilt of the camera to 30 degrees
+                                    .build();                   // Creates a CameraPosition from the builder
+                            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
-            if (ContextCompat.checkSelfPermission(this,
+                        }
 
-                    Manifest.permission.ACCESS_FINE_LOCATION)
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
 
-                    == PackageManager.PERMISSION_GRANTED) {
-
-                buildGoogleApiClient();
-
-                mMap.setMyLocationEnabled(true);
-
+                        }
+                    });
+                }
             }
 
-        } else {
-
-            buildGoogleApiClient();
-
-            mMap.setMyLocationEnabled(true);
-
-        }
-
-        googleMap.clear();
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
 
     }
 
@@ -432,61 +459,6 @@ public class MainActivity extends AppCompatActivity
 
     public void onLocationChanged(Location location) {
 
-        Log.d("onLocationChanged", "entered");
-
-
-        mLastLocation = location;
-
-        if (mCurrLocationMarker != null) {
-
-            mCurrLocationMarker.remove();
-
-        }
-
-
-        //Place current location marker
-
-        latitude = location.getLatitude();
-
-        longitude = location.getLongitude();
-
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-
-        MarkerOptions markerOptions = new MarkerOptions();
-
-        markerOptions.position(latLng);
-
-        markerOptions.title("Current Position");
-
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
-
-        mCurrLocationMarker = mMap.addMarker(markerOptions);
-
-
-        mMap.setOnMarkerClickListener(this);
-
-
-        //move map camera
-
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
-
-
-        Log.d("onLocationChanged", String.format("latitude:%.3f longitude:%.3f", latitude, longitude));
-
-
-        //stop location updates
-
-        if (mGoogleApiClient != null) {
-
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-
-            Log.d("onLocationChanged", "Removing Location Updates");
-
-        }
-
-        Log.d("onLocationChanged", "Exit");
 
 
     }

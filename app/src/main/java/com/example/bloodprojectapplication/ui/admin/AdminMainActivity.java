@@ -58,14 +58,12 @@ public class AdminMainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.logout:
-                FirebaseAuth.getInstance().signOut();
-                Intent intent2 = new Intent(AdminMainActivity.this, LoginActivity.class);
-                startActivity(intent2);
-                finish();
-                return true;
-
+        if (item.getItemId() == R.id.logout) {
+            FirebaseAuth.getInstance().signOut();
+            Intent intent2 = new Intent(AdminMainActivity.this, LoginActivity.class);
+            startActivity(intent2);
+            finish();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
