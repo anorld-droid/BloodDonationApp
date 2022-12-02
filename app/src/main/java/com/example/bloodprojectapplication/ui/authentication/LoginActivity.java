@@ -148,7 +148,9 @@ public class LoginActivity extends AppCompatActivity {
 
                 String phoneNumber = snapshot.child("phonenumber").getValue().toString();
                 SharePreference.getINSTANCE(getApplicationContext()).setPhonenumber(phoneNumber);
-                updateLocation(name, phoneNumber, bloodGroup);
+                if (type.equals("donor")) {
+                    updateLocation(name, phoneNumber, bloodGroup);
+                }
                 Intent intent;
                 if (type.equals("Admin")) {
                     intent = new Intent(LoginActivity.this, AdminMainActivity.class);
